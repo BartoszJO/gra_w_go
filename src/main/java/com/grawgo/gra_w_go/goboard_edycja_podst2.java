@@ -3,6 +3,7 @@ package com.grawgo.gra_w_go;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -10,12 +11,17 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
+
+
+
 
 public class goboard_edycja_podst2 extends Application {
     private static final int BOARD_SIZE = 9; // Rozmiar planszy (9x9)
     private static final Color LINE_COLOR = Color.BLACK;
-    private static final Color BOARD_COLOR = Color.BURLYWOOD;
+    private static final Color BOARD_COLOR = Color.web("#262626");
     private static final double BOARD_WIDTH = 600.0;
     private static final double BOARD_HEIGHT = 600.0;
 
@@ -25,6 +31,11 @@ public class goboard_edycja_podst2 extends Application {
     @Override
     public void start(Stage stage) {
         root = new Group(); // Inicjalizuj root jako nową instancję Group
+
+        // Dodaj szare tło pod planszą
+        Rectangle background = new Rectangle(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+        background.setFill(Color.BURLYWOOD);
+        root.getChildren().add(background);
 
         // Równomierne rozmieszczenie linii pionowych
         for (int i = 0; i < BOARD_SIZE; i++) {
@@ -43,6 +54,7 @@ public class goboard_edycja_podst2 extends Application {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 double x = (j + 1.0) * BOARD_WIDTH / (BOARD_SIZE + 1);
                 Circle circle = createCircle(x, y);
+                circle.setFill(Color.BURLYWOOD);
                 root.getChildren().add(circle);
 
                 // Obsługa zdarzeń myszy dla okręgu
@@ -65,9 +77,28 @@ public class goboard_edycja_podst2 extends Application {
         // i historią ruchów po prawej stronie
         VBox buttonPanel = new VBox();
         Button whiteButton = new Button("Biały");
+        whiteButton.setFont(new Font(15));
+        whiteButton.setStyle("-fx-background-color: #595959;");
+        whiteButton.setTextFill(Color.WHITE);
+        VBox.setMargin(whiteButton, new Insets(10, 20, 10, 20));
+
         Button blackButton = new Button("Czarny");
+        blackButton.setFont(new Font(15));
+        blackButton.setStyle("-fx-background-color: #595959;");
+        blackButton.setTextFill(Color.WHITE);
+        VBox.setMargin(blackButton, new Insets(10, 20, 10, 20));
+
         Button resetButton = new Button("Reset");
+        resetButton.setFont(new Font(15));
+        resetButton.setStyle("-fx-background-color: #595959;");
+        resetButton.setTextFill(Color.WHITE);
+        VBox.setMargin(resetButton, new Insets(10, 20, 10, 20));
+
         Button giveUpButton = new Button("Poddaj się");
+        giveUpButton.setFont(new Font(15));
+        giveUpButton.setStyle("-fx-background-color: #595959;");
+        giveUpButton.setTextFill(Color.WHITE);
+        VBox.setMargin(giveUpButton, new Insets(10, 20, 10, 20));
 
         whiteButton.setOnAction(event -> setChangeColorMode("Biały"));
         blackButton.setOnAction(event -> setChangeColorMode("Czarny"));
@@ -133,7 +164,7 @@ public class goboard_edycja_podst2 extends Application {
                 circle.setFill(Color.BLACK);
                 break;
             case "Reset":
-                circle.setFill(BOARD_COLOR);
+                circle.setFill(Color.BURLYWOOD);
                 break;
         }
         // Zresetuj obsługę zdarzeń kliknięcia myszy, aby nie zmieniać koloru po ponownym najechaniu
