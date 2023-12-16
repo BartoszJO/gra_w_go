@@ -34,7 +34,7 @@ public class goboard_edycja_podst2 extends Application {
         }
 
         // Równomierne rozmieszczenie linii poziomych
-        for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int i = BOARD_SIZE - 1; i >= 0; i--) {
             double y = (i + 1.0) * BOARD_HEIGHT / (BOARD_SIZE + 1);
             Line horizontalLine = createLine(0, y, BOARD_WIDTH, y);
             root.getChildren().add(horizontalLine);
