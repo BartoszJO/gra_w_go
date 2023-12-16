@@ -64,6 +64,7 @@ public class goboard_edycja_podst2 extends Application {
             }
         }
 
+
         VBox buttonPanel = new VBox();
 
         Button resetButton = new Button("Reset");
