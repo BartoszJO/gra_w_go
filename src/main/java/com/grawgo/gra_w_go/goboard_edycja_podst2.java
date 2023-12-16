@@ -15,7 +15,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-
 public class goboard_edycja_podst2 extends Application {
     private static final int BOARD_SIZE = 9; // Rozmiar planszy (9x9)
     private static final Color LINE_COLOR = Color.BLACK;
@@ -24,31 +23,28 @@ public class goboard_edycja_podst2 extends Application {
     private static final double BOARD_HEIGHT = 600.0;
 
     private ObservableList<String> moveHistory = FXCollections.observableArrayList();
-    private Group root; // Dodaj pole root jako zmienną instancji
+    private Group root;
+    private boolean isWhiteTurn = false;
 
     @Override
     public void start(Stage stage) {
-        root = new Group(); // Inicjalizuj root jako nową instancję Group
+        root = new Group();
 
-        // Dodaj szare tło pod planszą
         Rectangle background = new Rectangle(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
         background.setFill(Color.BURLYWOOD);
         root.getChildren().add(background);
 
-        // Równomierne rozmieszczenie linii pionowych
         for (int i = 0; i < BOARD_SIZE; i++) {
             double x = (i + 1.0) * BOARD_WIDTH / (BOARD_SIZE + 1);
             Line verticalLine = createLine(x, 0, x, BOARD_HEIGHT);
             root.getChildren().add(verticalLine);
         }
 
-        // Równomierne rozmieszczenie linii poziomych
         for (int i = BOARD_SIZE - 1; i >= 0; i--) {
             double y = (i + 1.0) * BOARD_HEIGHT / (BOARD_SIZE + 1);
             Line horizontalLine = createLine(0, y, BOARD_WIDTH, y);
             root.getChildren().add(horizontalLine);
 
-            // Dodanie okręgu nad przecięciem linii poziomej
             for (int j = 0; j < BOARD_SIZE; j++) {
                 double x = (j + 1.0) * BOARD_WIDTH / (BOARD_SIZE + 1);
                 Circle circle = createCircle(x, y);
@@ -57,34 +53,18 @@ public class goboard_edycja_podst2 extends Application {
 
                 // Obsługa zdarzeń myszy dla okręgu
                 circle.setOnMouseEntered(event -> circle.setStroke(Color.RED));
-                circle.setOnMouseExited(event -> circle.setStroke(Color.BLACK));
+                circle.setOnMouseExited(event -> circle.setStroke(LINE_COLOR));
 
                 // Obsługa zdarzeń kliknięcia myszy dla okręgu
                 circle.setOnMouseClicked(event -> {
-                    String color = (event.isShiftDown()) ? "Czarny" : "Biały";
-                    if (event.isAltDown()) {
-                        color = "Reset";
-                    }
-                    setCircleFillColor(circle, color);
-                    addMoveToHistory(color, circle);
+                    toggleCircleColor(circle);
+                    addMoveToHistory(circle);
+                    isWhiteTurn = !isWhiteTurn;
                 });
             }
         }
 
-        // Dodanie panelu z przyciskami "Biały", "Czarny", "Reset", "Poddaj się"
-        // i historią ruchów po prawej stronie
         VBox buttonPanel = new VBox();
-        Button whiteButton = new Button("Biały");
-        whiteButton.setFont(new Font(15));
-        whiteButton.setStyle("-fx-background-color: #595959;");
-        whiteButton.setTextFill(Color.WHITE);
-        VBox.setMargin(whiteButton, new Insets(10, 20, 10, 20));
-
-        Button blackButton = new Button("Czarny");
-        blackButton.setFont(new Font(15));
-        blackButton.setStyle("-fx-background-color: #595959;");
-        blackButton.setTextFill(Color.WHITE);
-        VBox.setMargin(blackButton, new Insets(10, 20, 10, 20));
 
         Button resetButton = new Button("Reset");
         resetButton.setFont(new Font(15));
@@ -98,31 +78,27 @@ public class goboard_edycja_podst2 extends Application {
         giveUpButton.setTextFill(Color.WHITE);
         VBox.setMargin(giveUpButton, new Insets(10, 20, 10, 20));
 
-        whiteButton.setOnAction(event -> setChangeColorMode("Biały"));
-        blackButton.setOnAction(event -> setChangeColorMode("Czarny"));
         resetButton.setOnAction(event -> {
             resetCircleColors(root);
-            moveHistory.clear(); // Czyść historię ruchów
+            moveHistory.clear();
+            isWhiteTurn = false;
         });
+
         giveUpButton.setOnAction(event -> showGameOverDialog());
 
-        buttonPanel.getChildren().addAll(whiteButton, blackButton, resetButton, giveUpButton);
+        buttonPanel.getChildren().addAll(resetButton, giveUpButton);
 
-        // Dodanie listy historii ruchów
         ListView<String> moveHistoryListView = new ListView<>(moveHistory);
         moveHistoryListView.setPrefHeight(BOARD_HEIGHT);
         moveHistoryListView.setPrefWidth(150);
 
-        // Dodanie wszystkich elementów do głównego kontenera
         VBox container = new VBox();
         container.getChildren().addAll(buttonPanel, moveHistoryListView);
         container.setSpacing(10);
 
-        // Ustawienie pozycji kontenera
         container.setLayoutX(BOARD_WIDTH + 10);
         container.setLayoutY(50);
 
-        // Dodanie kontenera do sceny
         root.getChildren().add(container);
 
         Scene scene = new Scene(root, BOARD_WIDTH + container.getPrefWidth() + 150, BOARD_HEIGHT);
@@ -133,55 +109,26 @@ public class goboard_edycja_podst2 extends Application {
         stage.show();
     }
 
-    private void setChangeColorMode(String color) {
-        // Usuń poprzednią obsługę zdarzeń kliknięcia myszy dla wszystkich okręgów
-        for (var node : root.getChildren()) {
-            if (node instanceof Circle circle) {
-                circle.setOnMouseClicked(null);
-            }
+    private void toggleCircleColor(Circle circle) {
+        if (isWhiteTurn) {
+            circle.setFill(Color.WHITE);
+        } else {
+            circle.setFill(Color.BLACK);
         }
-
-        // Ustaw nową obsługę zdarzeń kliknięcia myszy dla wszystkich okręgów
-        for (var node : root.getChildren()) {
-            if (node instanceof Circle circle) {
-                circle.setOnMouseClicked(event -> {
-                    setCircleFillColor(circle, color);
-                    addMoveToHistory(color, circle);
-                });
-            }
-        }
-    }
-
-    private void setCircleFillColor(Circle circle, String color) {
-        // Ustawianie koloru wypełnienia dla danego okręgu
-        switch (color) {
-            case "Biały":
-                circle.setFill(Color.WHITE);
-                break;
-            case "Czarny":
-                circle.setFill(Color.BLACK);
-                break;
-            case "Reset":
-                circle.setFill(Color.BURLYWOOD);
-                break;
-        }
-        // Zresetuj obsługę zdarzeń kliknięcia myszy, aby nie zmieniać koloru po ponownym najechaniu
-        circle.setOnMouseClicked(null);
     }
 
     private void resetCircleColors(Group root) {
-        // Zresetuj kolor wypełnienia dla wszystkich okręgów na kolor tła
         for (var node : root.getChildren()) {
             if (node instanceof Circle circle) {
-                setCircleFillColor(circle, "Reset");
+                circle.setFill(Color.BURLYWOOD);
             }
         }
     }
 
-    private void addMoveToHistory(String color, Circle circle) {
-        // Dodaj informacje o ruchu do historii
+    private void addMoveToHistory(Circle circle) {
         int x = (int) circle.getCenterX() / 60;
         int y = (int) circle.getCenterY() / 60;
+        String color = (circle.getFill() == Color.BURLYWOOD) ? "Reset" : (isWhiteTurn ? "Biały" : "Czarny");
         String moveInfo = color + ": (" + x + ", " + y + ")";
         moveHistory.add(moveInfo);
     }
@@ -194,22 +141,21 @@ public class goboard_edycja_podst2 extends Application {
 
         alert.showAndWait();
 
-        // Po naciśnięciu "Ok", zakończ działanie programu
         System.exit(0);
     }
 
     private Line createLine(double startX, double startY, double endX, double endY) {
         Line line = new Line(startX, startY, endX, endY);
-        line.setStroke(LINE_COLOR); // Kolor linii
+        line.setStroke(LINE_COLOR);
         line.setStrokeWidth(5);
 
         return line;
     }
 
     private Circle createCircle(double centerX, double centerY) {
-        Circle circle = new Circle(centerX, centerY, 15); // Ustaw rozmiar okręgu według własnych preferencji
-        circle.setFill(BOARD_COLOR); // Kolor okręgu
-        circle.setStroke(Color.BLACK);
+        Circle circle = new Circle(centerX, centerY, 15);
+        circle.setFill(BOARD_COLOR);
+        circle.setStroke(LINE_COLOR);
         circle.setStrokeWidth(3);
 
         return circle;
