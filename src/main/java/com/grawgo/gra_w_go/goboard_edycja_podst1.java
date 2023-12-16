@@ -36,6 +36,10 @@ public class goboard_edycja_podst1 extends Application {
                 double x = (j + 1.0) * BOARD_WIDTH / (BOARD_SIZE + 1);
                 Circle circle = createCircle(x, y);
                 root.getChildren().add(circle);
+
+                // Obsługa zdarzeń myszy dla okręgu
+                circle.setOnMouseEntered(event -> circle.setStroke(Color.RED));
+                circle.setOnMouseExited(event -> circle.setStroke(Color.BLACK));
             }
         }
 
