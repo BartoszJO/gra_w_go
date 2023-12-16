@@ -1,9 +1,11 @@
 package com.grawgo.gra_w_go;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -17,9 +19,12 @@ public class goboard_edycja_podst2 extends Application {
     private static final double BOARD_WIDTH = 600.0;
     private static final double BOARD_HEIGHT = 600.0;
 
+    private ObservableList<String> moveHistory = FXCollections.observableArrayList();
+    private Group root; // Dodaj pole root jako zmienną instancji
+
     @Override
     public void start(Stage stage) {
-        Group root = new Group();
+        root = new Group(); // Inicjalizuj root jako nową instancję Group
 
         // Równomierne rozmieszczenie linii pionowych
         for (int i = 0; i < BOARD_SIZE; i++) {
@@ -46,29 +51,52 @@ public class goboard_edycja_podst2 extends Application {
 
                 // Obsługa zdarzeń kliknięcia myszy dla okręgu
                 circle.setOnMouseClicked(event -> {
-                    Color fillColor = (event.isShiftDown()) ? Color.BLACK : Color.WHITE;
-                    setCircleFillColor(circle, fillColor);
+                    String color = (event.isShiftDown()) ? "Czarny" : "Biały";
+                    if (event.isAltDown()) {
+                        color = "Reset";
+                    }
+                    setCircleFillColor(circle, color);
+                    addMoveToHistory(color, circle);
                 });
             }
         }
 
-        // Dodanie panelu z przyciskami "Biały", "Czarny" i "Reset"
+        // Dodanie panelu z przyciskami "Biały", "Czarny", "Reset", "Poddaj się"
+        // i historią ruchów po prawej stronie
         VBox buttonPanel = new VBox();
         Button whiteButton = new Button("Biały");
         Button blackButton = new Button("Czarny");
         Button resetButton = new Button("Reset");
+        Button giveUpButton = new Button("Poddaj się");
 
-        whiteButton.setOnAction(event -> setChangeColorMode(Color.WHITE, root));
-        blackButton.setOnAction(event -> setChangeColorMode(Color.BLACK, root));
-        resetButton.setOnAction(event -> setChangeColorMode(Color.BURLYWOOD, root));
+        whiteButton.setOnAction(event -> setChangeColorMode("Biały"));
+        blackButton.setOnAction(event -> setChangeColorMode("Czarny"));
+        resetButton.setOnAction(event -> {
+            resetCircleColors(root);
+            moveHistory.clear(); // Czyść historię ruchów
+        });
+        giveUpButton.setOnAction(event -> showGameOverDialog());
 
-        buttonPanel.getChildren().addAll(whiteButton, blackButton, resetButton);
-        buttonPanel.setLayoutX(BOARD_WIDTH + 10);
-        buttonPanel.setLayoutY(50);
+        buttonPanel.getChildren().addAll(whiteButton, blackButton, resetButton, giveUpButton);
 
-        root.getChildren().add(buttonPanel);
+        // Dodanie listy historii ruchów
+        ListView<String> moveHistoryListView = new ListView<>(moveHistory);
+        moveHistoryListView.setPrefHeight(BOARD_HEIGHT);
+        moveHistoryListView.setPrefWidth(150);
 
-        Scene scene = new Scene(root, BOARD_WIDTH + buttonPanel.getWidth() + 70, BOARD_HEIGHT);
+        // Dodanie wszystkich elementów do głównego kontenera
+        VBox container = new VBox();
+        container.getChildren().addAll(buttonPanel, moveHistoryListView);
+        container.setSpacing(10);
+
+        // Ustawienie pozycji kontenera
+        container.setLayoutX(BOARD_WIDTH + 10);
+        container.setLayoutY(50);
+
+        // Dodanie kontenera do sceny
+        root.getChildren().add(container);
+
+        Scene scene = new Scene(root, BOARD_WIDTH + container.getPrefWidth() + 150, BOARD_HEIGHT);
         stage.setTitle("Go Board");
         scene.setFill(BOARD_COLOR);
         stage.setResizable(false);
@@ -76,20 +104,69 @@ public class goboard_edycja_podst2 extends Application {
         stage.show();
     }
 
-    private void setChangeColorMode(Color color, Group root) {
-        // Ustaw tryb zmiany koloru
+    private void setChangeColorMode(String color) {
+        // Usuń poprzednią obsługę zdarzeń kliknięcia myszy dla wszystkich okręgów
         for (var node : root.getChildren()) {
             if (node instanceof Circle circle) {
-                circle.setOnMouseClicked(event -> setCircleFillColor(circle, color));
+                circle.setOnMouseClicked(null);
+            }
+        }
+
+        // Ustaw nową obsługę zdarzeń kliknięcia myszy dla wszystkich okręgów
+        for (var node : root.getChildren()) {
+            if (node instanceof Circle circle) {
+                circle.setOnMouseClicked(event -> {
+                    setCircleFillColor(circle, color);
+                    addMoveToHistory(color, circle);
+                });
             }
         }
     }
 
-    private void setCircleFillColor(Circle circle, Color color) {
+    private void setCircleFillColor(Circle circle, String color) {
         // Ustawianie koloru wypełnienia dla danego okręgu
-        circle.setFill(color);
+        switch (color) {
+            case "Biały":
+                circle.setFill(Color.WHITE);
+                break;
+            case "Czarny":
+                circle.setFill(Color.BLACK);
+                break;
+            case "Reset":
+                circle.setFill(BOARD_COLOR);
+                break;
+        }
         // Zresetuj obsługę zdarzeń kliknięcia myszy, aby nie zmieniać koloru po ponownym najechaniu
         circle.setOnMouseClicked(null);
+    }
+
+    private void resetCircleColors(Group root) {
+        // Zresetuj kolor wypełnienia dla wszystkich okręgów na kolor tła
+        for (var node : root.getChildren()) {
+            if (node instanceof Circle circle) {
+                setCircleFillColor(circle, "Reset");
+            }
+        }
+    }
+
+    private void addMoveToHistory(String color, Circle circle) {
+        // Dodaj informacje o ruchu do historii
+        int x = (int) circle.getCenterX() / 60;
+        int y = (int) circle.getCenterY() / 60;
+        String moveInfo = color + ": (" + x + ", " + y + ")";
+        moveHistory.add(moveInfo);
+    }
+
+    private void showGameOverDialog() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Koniec gry");
+        alert.setHeaderText(null);
+        alert.setContentText("Partia zakończona. Gracz się poddał.");
+
+        alert.showAndWait();
+
+        // Po naciśnięciu "Ok", zakończ działanie programu
+        System.exit(0);
     }
 
     private Line createLine(double startX, double startY, double endX, double endY) {
