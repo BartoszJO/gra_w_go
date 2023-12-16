@@ -16,8 +16,6 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 
-
-
 public class goboard_edycja_podst2 extends Application {
     private static final int BOARD_SIZE = 9; // Rozmiar planszy (9x9)
     private static final Color LINE_COLOR = Color.BLACK;
